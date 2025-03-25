@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-#if defined(DRV_AMDGPU) && !defined(DRV_HBM_HELPER)
+#ifdef DRV_AMDGPU
 
 #include <assert.h>
 #include <dlfcn.h>
