@@ -331,8 +331,14 @@ int gbm_mesa_bo_create(struct bo *bo, uint32_t width, uint32_t height, uint32_t 
 	};
 
 	if (alloc_args.drm_format == 0) {
-		/* Always use linear for spoofed format allocations. */
-		drv_bo_from_format(bo, alloc_args.width, alloc_args.height, format);
+		/* Always use linear for spoofed format allocations. Multi-planar YUV (NV12) is
+		 * imported by the GPU for video decode and display, and AMD GFX9+ only takes linear
+		 * planes with a 256 byte pitch; 3-plane formats have half-width chroma planes. */
+		uint32_t stride = alloc_args.width;
+		size_t num_planes = drv_num_planes_from_format(format);
+		if (num_planes > 1)
+			stride = ALIGN(stride, num_planes == 2 ? 256 : 512);
+		drv_bo_from_format(bo, stride, alloc_args.height, format);
 		bo_layout_ready = true;
 		bo->meta.total_size = ALIGN(bo->meta.total_size, size_align);
 		alloc_args.drm_format = DRM_FORMAT_R8;
